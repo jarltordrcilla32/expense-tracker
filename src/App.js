@@ -1,19 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, BarChart3, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
+import { Plus, Search, BarChart3, Trash2, Edit2, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { loadExpenses, saveExpenses } from './utils/storage';
 import { formatCurrency } from './utils/formatters';
 import { CATEGORIES } from './data/categories';
 import { getSampleData } from './data/sampleData';
 
+
 export default function ExpenseTracker() {
   // ========================================================================
-  //                          STATE MANAGEMENT
+  //                              STATE MANAGEMENT
   // ========================================================================
   
   const [showModal, setShowModal] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('date');
+  const [sortDirection, setSortDirection] = useState('desc');
   
   const [expenses, setExpenses] = useState(() => {
     const stored = loadExpenses();
@@ -39,9 +43,53 @@ export default function ExpenseTracker() {
   //                             COMPUTED VALUES
   // ========================================================================
   
+  const filteredExpenses = useMemo(() => {
+    if (!searchTerm) return expenses;
+    
+    const term = searchTerm.toLowerCase();
+    return expenses.filter(expense => {
+      const matchesDescription = expense.description.toLowerCase().includes(term);
+      
+      const matchesCategory = expense.category.toLowerCase().includes(term);
+      
+      const matchesDate = expense.date.includes(term);
+      
+      const amountString = expense.amount.toString();
+      const matchesAmount = amountString.includes(term);
+      
+      return matchesDescription || matchesCategory || matchesDate || matchesAmount;
+    });
+  }, [expenses, searchTerm]);
+
+  const sortedExpenses = useMemo(() => {
+    const sorted = [...filteredExpenses].sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+
+      if (sortField === 'amount') {
+        aValue = Number(aValue);
+        bValue = Number(bValue);
+      } else if (sortField === 'date') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      } else {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    });
+
+    return sorted;
+  }, [filteredExpenses, sortField, sortDirection]);
+  
   const total = useMemo(() => {
-    return expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  }, [expenses]);
+    return sortedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }, [sortedExpenses]);
 
   // ========================================================================
   //                              EVENT HANDLERS
@@ -86,6 +134,7 @@ export default function ExpenseTracker() {
       category: 'Other'
     });
 
+    // Close modal
     setShowModal(false);
   };
 
@@ -117,6 +166,14 @@ export default function ExpenseTracker() {
     setShowModal(false);
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
   // ========================================================================
   //                                 RENDER
   // ========================================================================
@@ -145,7 +202,6 @@ export default function ExpenseTracker() {
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         
         {!showReports ? (
-          // EXPENSES VIEW
           <>
             {/* Search Bar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -153,10 +209,17 @@ export default function ExpenseTracker() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="Search expenses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by description, category, date, or amount..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+              {searchTerm && (
+                <p className="text-sm text-gray-500 mt-2">
+                  Found {sortedExpenses.length} expense{sortedExpenses.length !== 1 ? 's' : ''} matching "{searchTerm}"
+                </p>
+              )}
             </div>
 
             {/* Expenses Table */}
@@ -165,20 +228,49 @@ export default function ExpenseTracker() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                      <th 
+                        onClick={() => handleSort('date')}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      >
                         <div className="flex items-center gap-1">
                           Date
-                          <ChevronDown size={16} />
+                          {sortField === 'date' && (
+                            sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                          )}
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
-                        Description
+                      <th 
+                        onClick={() => handleSort('description')}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          Description
+                          {sortField === 'description' && (
+                            sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                          )}
+                        </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
-                        Category
+                      <th 
+                        onClick={() => handleSort('category')}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          Category
+                          {sortField === 'category' && (
+                            sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                          )}
+                        </div>
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
-                        Amount
+                      <th 
+                        onClick={() => handleSort('amount')}
+                        className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Amount
+                          {sortField === 'amount' && (
+                            sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                          )}
+                        </div>
                       </th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                         Actions
@@ -186,17 +278,21 @@ export default function ExpenseTracker() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {expenses.length === 0 ? (
+                    {sortedExpenses.length === 0 ? (
                       <tr>
                         <td colSpan="5" className="px-4 py-12 text-center text-gray-500">
                           <div className="flex flex-col items-center gap-2">
-                            <p className="text-lg font-medium">No expenses yet</p>
-                            <p className="text-sm">Click the + button to add your first expense</p>
+                            <p className="text-lg font-medium">
+                              {searchTerm ? 'No expenses found' : 'No expenses yet'}
+                            </p>
+                            <p className="text-sm">
+                              {searchTerm ? 'Try a different search term' : 'Click the + button to add your first expense'}
+                            </p>
                           </div>
                         </td>
                       </tr>
                     ) : (
-                      expenses.map(expense => (
+                      sortedExpenses.map(expense => (
                         <tr key={expense.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.date}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.description}</td>
@@ -259,7 +355,7 @@ export default function ExpenseTracker() {
         )}
       </main>
 
-      {/* ADD EXPENSE BUTTON */}
+      {/* ADD EXPENSES BUTTON */}
       {!showReports && (
         <button
           onClick={() => setShowModal(true)}
