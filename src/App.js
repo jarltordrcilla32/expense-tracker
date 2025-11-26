@@ -13,6 +13,7 @@ export default function ExpenseTracker() {
   
   const [showModal, setShowModal] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   
   const [expenses, setExpenses] = useState(() => {
     const stored = loadExpenses();
@@ -27,7 +28,7 @@ export default function ExpenseTracker() {
   });
 
   // ========================================================================
-  //                            SIDE EFFECTS
+  //                              SIDE EFFECTS
   // ========================================================================
   
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function ExpenseTracker() {
   }, [expenses]);
 
   // ========================================================================
-  //                           COMPUTED VALUES
+  //                             COMPUTED VALUES
   // ========================================================================
   
   const total = useMemo(() => {
@@ -43,7 +44,7 @@ export default function ExpenseTracker() {
   }, [expenses]);
 
   // ========================================================================
-  //                            EVENT HANDLERS
+  //                              EVENT HANDLERS
   // ========================================================================
   
   const handleInputChange = (e) => {
@@ -60,15 +61,23 @@ export default function ExpenseTracker() {
       return;
     }
 
-    const newExpense = {
-      id: Date.now().toString(),
-      date: formData.date,
-      description: formData.description,
-      amount: Number(formData.amount),
-      category: formData.category
-    };
-
-    setExpenses([newExpense, ...expenses]);
+    if (editingId) {
+      setExpenses(expenses.map(exp =>
+        exp.id === editingId
+          ? { ...formData, amount: Number(formData.amount), id: editingId }
+          : exp
+      ));
+      setEditingId(null);
+    } else {
+      const newExpense = {
+        id: Date.now().toString(),
+        date: formData.date,
+        description: formData.description,
+        amount: Number(formData.amount),
+        category: formData.category
+      };
+      setExpenses([newExpense, ...expenses]);
+    }
 
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -80,16 +89,43 @@ export default function ExpenseTracker() {
     setShowModal(false);
   };
 
+  const handleEdit = (expense) => {
+    setFormData({
+      date: expense.date,
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category
+    });
+    setEditingId(expense.id);
+    setShowModal(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this expense?')) {
+      setExpenses(expenses.filter(exp => exp.id !== id));
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      amount: '',
+      category: 'Other'
+    });
+    setShowModal(false);
+  };
+
   // ========================================================================
-  //                                RENDER
+  //                                 RENDER
   // ========================================================================
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ===================================================================
-                                    HEADER
-          ==================================================================*/
-      }
+      {/* =================================================================== 
+                                      HEADER 
+          ===================================================================*/}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -105,9 +141,7 @@ export default function ExpenseTracker() {
         </div>
       </header>
 
-      {/* ===================================================================
-                                  MAIN CONTENT 
-          ==================================================================*/}
+      {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         
         {!showReports ? (
@@ -162,7 +196,6 @@ export default function ExpenseTracker() {
                         </td>
                       </tr>
                     ) : (
-                      // Display expenses
                       expenses.map(expense => (
                         <tr key={expense.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.date}</td>
@@ -177,10 +210,18 @@ export default function ExpenseTracker() {
                           </td>
                           <td className="px-4 py-3 text-sm text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <button className="text-blue-600 hover:text-blue-800">
+                              <button 
+                                onClick={() => handleEdit(expense)}
+                                className="text-blue-600 hover:text-blue-800"
+                                aria-label="Edit expense"
+                              >
                                 <Edit2 size={16} />
                               </button>
-                              <button className="text-red-600 hover:text-red-800">
+                              <button 
+                                onClick={() => handleDelete(expense.id)}
+                                className="text-red-600 hover:text-red-800"
+                                aria-label="Delete expense"
+                              >
                                 <Trash2 size={16} />
                               </button>
                             </div>
@@ -235,9 +276,11 @@ export default function ExpenseTracker() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Add New Expense</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingId ? 'Edit Expense' : 'Add New Expense'}
+              </h2>
               <button 
-                onClick={() => setShowModal(false)}
+                onClick={cancelEdit}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
@@ -305,10 +348,10 @@ export default function ExpenseTracker() {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Plus size={20} />
-                Add Expense
+                {editingId ? 'Update Expense' : 'Add Expense'}
               </button>
               <button 
-                onClick={() => setShowModal(false)}
+                onClick={cancelEdit}
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
