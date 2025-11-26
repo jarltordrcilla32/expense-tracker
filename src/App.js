@@ -1,15 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, BarChart3, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
 
+import { loadExpenses, saveExpenses } from './utils/storage';
+import { formatCurrency } from './utils/formatters';
+import { CATEGORIES } from './data/categories';
+import { getSampleData } from './data/sampleData';
+
 export default function ExpenseTracker() {
+  // ========================================================================
+  //                          STATE MANAGEMENT
+  // ========================================================================
+  
   const [showModal, setShowModal] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  
+  const [expenses, setExpenses] = useState(() => {
+    const stored = loadExpenses();
+    return stored || getSampleData();
+  });
+  
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    description: '',
+    amount: '',
+    category: 'Other'
+  });
+
+  // ========================================================================
+  //                            SIDE EFFECTS
+  // ========================================================================
+  
+  useEffect(() => {
+    saveExpenses(expenses);
+  }, [expenses]);
+
+  // ========================================================================
+  //                           COMPUTED VALUES
+  // ========================================================================
+  
+  const total = useMemo(() => {
+    return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }, [expenses]);
+
+  // ========================================================================
+  //                            EVENT HANDLERS
+  // ========================================================================
+  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'amount' ? parseFloat(value) || '' : value
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (!formData.description || !formData.amount) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    const newExpense = {
+      id: Date.now().toString(),
+      date: formData.date,
+      description: formData.description,
+      amount: Number(formData.amount),
+      category: formData.category
+    };
+
+    setExpenses([newExpense, ...expenses]);
+
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      amount: '',
+      category: 'Other'
+    });
+
+    setShowModal(false);
+  };
+
+  // ========================================================================
+  //                                RENDER
+  // ========================================================================
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ========================================================================
-                                      HEADER
-          ======================================================================== */}
+      {/* ===================================================================
+                                    HEADER
+          ==================================================================*/
+      }
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -25,20 +105,15 @@ export default function ExpenseTracker() {
         </div>
       </header>
 
-      {/* ========================================================================
-                                    MAIN CONTENT
-          ======================================================================== */}
+      {/* ===================================================================
+                                  MAIN CONTENT 
+          ==================================================================*/}
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         
         {!showReports ? (
-          //=======================================================================
-          //                        EXPENSES VIEW
-          //=======================================================================
+          // EXPENSES VIEW
           <>
-            {/* 
-            ========================================================================
-                                    SEARCH BAR
-            ======================================================================== */}
+            {/* Search Bar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -50,10 +125,7 @@ export default function ExpenseTracker() {
               </div>
             </div>
 
-            {/* 
-            ========================================================================
-                                    EXPENSES TABLE
-            ======================================================================== */}
+            {/* Expenses Table */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -80,20 +152,48 @@ export default function ExpenseTracker() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <tr>
-                      <td colSpan="5" className="px-4 py-12 text-center text-gray-500">
-                        <div className="flex flex-col items-center gap-2">
-                          <p className="text-lg font-medium">No expenses yet</p>
-                          <p className="text-sm">Click the + button to add your first expense</p>
-                        </div>
-                      </td>
-                    </tr>
+                    {expenses.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-4 py-12 text-center text-gray-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="text-lg font-medium">No expenses yet</p>
+                            <p className="text-sm">Click the + button to add your first expense</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      // Display expenses
+                      expenses.map(expense => (
+                        <tr key={expense.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">{expense.date}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{expense.description}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                              {expense.category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                            {formatCurrency(expense.amount)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button className="text-blue-600 hover:text-blue-800">
+                                <Edit2 size={16} />
+                              </button>
+                              <button className="text-red-600 hover:text-red-800">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                   <tfoot className="bg-gray-50 border-t-2 border-gray-300">
                     <tr>
                       <td colSpan="3" className="px-4 py-3 text-sm font-bold text-gray-900">Total</td>
                       <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
-                        ₱0.00
+                        {formatCurrency(total)}
                       </td>
                       <td></td>
                     </tr>
@@ -103,95 +203,22 @@ export default function ExpenseTracker() {
             </div>
           </>
         ) : (
-          //=======================================================================
-          //                        REPORTS VIEW
-          //=======================================================================
+          // REPORTS VIEW
           <div className="space-y-6">
-            {/* 
-            ========================================================================
-                                    YEARLY TOTAL
-            ======================================================================== */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
                 Yearly Total (2025)
               </h2>
-              <p className="text-3xl font-bold text-blue-600">₱0.00</p>
-            </div>
-
-            {/* 
-            ========================================================================
-                                    QUARTERLY REPORT
-            ======================================================================== */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quarterly Report</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map(q => (
-                  <div key={q} className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Q{q}</div>
-                    <div className="text-xl font-bold text-gray-900">₱0.00</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 
-            ========================================================================
-                                    MONTHLY REPORT
-            ======================================================================== */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Report</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month) => (
-                  <div key={month} className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-xs text-gray-600 mb-1">{month}</div>
-                    <div className="text-sm font-bold text-gray-900">₱0.00</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 
-            ========================================================================
-                                    WEEKLY REPORT CHART
-            ======================================================================== */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Chart)</h2>
-              <div className="px-4 py-12 text-center text-gray-500">
-                <p>No expense data yet</p>
-              </div>
-            </div>
-
-            {/* 
-            ========================================================================
-                                    WEEKLY REPORT TABLE
-            ======================================================================== */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Table)</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Week</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan="2" className="px-4 py-8 text-center text-gray-500">
-                        No expense data yet
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <p className="text-3xl font-bold text-blue-600">{formatCurrency(total)}</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Reports functionality coming in next commit
+              </p>
             </div>
           </div>
         )}
       </main>
 
-      {/* ========================================================================
-                                    ADD EXPENSE BUTTON
-          ======================================================================== */}
+      {/* ADD EXPENSE BUTTON */}
       {!showReports && (
         <button
           onClick={() => setShowModal(true)}
@@ -202,9 +229,7 @@ export default function ExpenseTracker() {
         </button>
       )}
 
-      {/* ========================================================================
-                                      EXPENSE MODAL
-          ======================================================================== */}
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -225,18 +250,24 @@ export default function ExpenseTracker() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <input
                   type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Travel</option>
-                  <option>Food</option>
-                  <option>Office Supplies</option>
-                  <option>Software</option>
-                  <option>Other</option>
+                <select 
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
 
@@ -244,6 +275,9 @@ export default function ExpenseTracker() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <input
                   type="text"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
                   placeholder="e.g., Taxi to client meeting"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -253,8 +287,12 @@ export default function ExpenseTracker() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
                 <input
                   type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleInputChange}
                   placeholder="0.00"
                   step="0.01"
+                  min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -262,7 +300,10 @@ export default function ExpenseTracker() {
 
             {/* Modal Footer */}
             <div className="flex gap-2 p-4 border-t border-gray-200 bg-gray-50">
-              <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={handleSubmit}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <Plus size={20} />
                 Add Expense
               </button>
