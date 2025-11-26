@@ -3,6 +3,7 @@ import { Plus, Search, BarChart3, Trash2, Edit2, X, ChevronDown, ChevronUp } fro
 
 import { loadExpenses, saveExpenses } from './utils/storage';
 import { formatCurrency } from './utils/formatters';
+import { getWeekNumber, getMonth, getQuarter, getYear } from './utils/dateHelpers';
 import { CATEGORIES } from './data/categories';
 import { getSampleData } from './data/sampleData';
 
@@ -49,11 +50,8 @@ export default function ExpenseTracker() {
     const term = searchTerm.toLowerCase();
     return expenses.filter(expense => {
       const matchesDescription = expense.description.toLowerCase().includes(term);
-      
       const matchesCategory = expense.category.toLowerCase().includes(term);
-      
       const matchesDate = expense.date.includes(term);
-      
       const amountString = expense.amount.toString();
       const matchesAmount = amountString.includes(term);
       
@@ -90,6 +88,34 @@ export default function ExpenseTracker() {
   const total = useMemo(() => {
     return sortedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   }, [sortedExpenses]);
+
+  const reportData = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const weeklyData = {};
+    const monthlyData = {};
+    const quarterlyData = {};
+    let yearlyTotal = 0;
+
+    expenses.forEach(expense => {
+      const expenseYear = getYear(expense.date);
+      
+      if (expenseYear === currentYear) {
+        const week = getWeekNumber(expense.date);
+        const month = getMonth(expense.date);
+        const quarter = getQuarter(expense.date);
+
+        weeklyData[week] = (weeklyData[week] || 0) + expense.amount;
+        
+        monthlyData[month] = (monthlyData[month] || 0) + expense.amount;
+        
+        quarterlyData[quarter] = (quarterlyData[quarter] || 0) + expense.amount;
+        
+        yearlyTotal += expense.amount;
+      }
+    });
+
+    return { weeklyData, monthlyData, quarterlyData, yearlyTotal };
+  }, [expenses]);
 
   // ========================================================================
   //                              EVENT HANDLERS
@@ -202,6 +228,7 @@ export default function ExpenseTracker() {
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         
         {!showReports ? (
+          // EXPENSES
           <>
             {/* Search Bar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -342,14 +369,121 @@ export default function ExpenseTracker() {
         ) : (
           // REPORTS VIEW
           <div className="space-y-6">
+            {/* Yearly Total */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Yearly Total (2025)
+                Yearly Total ({new Date().getFullYear()})
               </h2>
-              <p className="text-3xl font-bold text-blue-600">{formatCurrency(total)}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Reports functionality coming in next commit
+              <p className="text-3xl font-bold text-blue-600">
+                {formatCurrency(reportData.yearlyTotal)}
               </p>
+            </div>
+
+            {/* Quarterly Report */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quarterly Report</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map(q => (
+                  <div key={q} className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 mb-1">Q{q}</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {formatCurrency(reportData.quarterlyData[q] || 0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Monthly Report */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Report</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
+                  <div key={month} className="bg-gray-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-600 mb-1">{month}</div>
+                    <div className="text-sm font-bold text-gray-900">
+                      {formatCurrency(reportData.monthlyData[idx + 1] || 0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Weekly Report Chart */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Chart)</h2>
+              {Object.keys(reportData.weeklyData).length === 0 ? (
+                <div className="px-4 py-12 text-center text-gray-500">
+                  <p>No expense data for {new Date().getFullYear()} yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {Object.entries(reportData.weeklyData)
+                    .sort(([a], [b]) => Number(a) - Number(b))
+                    .map(([week, amount]) => {
+                      const maxAmount = Math.max(...Object.values(reportData.weeklyData), 1);
+                      const percentage = (amount / maxAmount) * 100;
+                      
+                      return (
+                        <div key={week} className="flex items-center gap-3">
+                          <div className="text-sm font-medium text-gray-600 w-16">Week {week}</div>
+                          <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden">
+                            <div
+                              className="bg-blue-600 h-full flex items-center justify-end pr-2 transition-all"
+                              style={{ width: `${percentage}%` }}
+                            >
+                              {percentage > 20 && (
+                                <span className="text-xs font-medium text-white">
+                                  {formatCurrency(amount)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {percentage <= 20 && (
+                            <div className="text-xs font-medium text-gray-600 w-24 text-right">
+                              {formatCurrency(amount)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* Weekly Report Table */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Table)</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Week</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {Object.keys(reportData.weeklyData).length === 0 ? (
+                      <tr>
+                        <td colSpan="2" className="px-4 py-8 text-center text-gray-500">
+                          No expense data for {new Date().getFullYear()} yet
+                        </td>
+                      </tr>
+                    ) : (
+                      Object.entries(reportData.weeklyData)
+                        .sort(([a], [b]) => Number(a) - Number(b))
+                        .map(([week, amount]) => (
+                          <tr key={week} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">Week {week}</td>
+                            <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                              {formatCurrency(amount)}
+                            </td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
