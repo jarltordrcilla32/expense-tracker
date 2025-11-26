@@ -205,17 +205,17 @@ export default function ExpenseTracker() {
   // ========================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#d9cfc7]">
       {/* =================================================================== 
                                       HEADER 
           ===================================================================*/}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <header className="sticky top-2 z-10">
+        <div className="bg-slate-200/40 shadow-lg border-2 border-white backdrop-blur-sm max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 rounded-full">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Expense Tracker</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Expense Tracker</h1>
             <button 
               onClick={() => setShowReports(!showReports)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#ae987e] text-white rounded-lg hover:bg-[#907a62] transition-colors"
             >
               <BarChart3 size={20} />
               {showReports ? 'View Expenses' : 'View Reports'}
@@ -231,7 +231,7 @@ export default function ExpenseTracker() {
           // EXPENSES
           <>
             {/* Search Bar */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="bg-[#c9b59c] rounded-full shadow-sm p-1 mb-6">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -239,7 +239,7 @@ export default function ExpenseTracker() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by description, category, date, or amount..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="bg-[#EFE9E3] w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:outline-none focus:ring-[#D9CFC7] focus:border-transparent"
                 />
               </div>
               {searchTerm && (
@@ -250,14 +250,14 @@ export default function ExpenseTracker() {
             </div>
 
             {/* Expenses Table */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-[#EFE9E3] rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-[#C9B59C] border-b border-black">
                     <tr>
                       <th 
                         onClick={() => handleSort('date')}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                        className="px-4 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:bg-[#F9F8F6] transition-colors select-none"
                       >
                         <div className="flex items-center gap-1">
                           Date
@@ -268,7 +268,7 @@ export default function ExpenseTracker() {
                       </th>
                       <th 
                         onClick={() => handleSort('description')}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                        className="px-4 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:bg-[#F9F8F6] transition-colors select-none"
                       >
                         <div className="flex items-center gap-1">
                           Description
@@ -279,7 +279,7 @@ export default function ExpenseTracker() {
                       </th>
                       <th 
                         onClick={() => handleSort('category')}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                        className="px-4 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:bg-[#F9F8F6] transition-colors select-none"
                       >
                         <div className="flex items-center gap-1">
                           Category
@@ -290,7 +290,7 @@ export default function ExpenseTracker() {
                       </th>
                       <th 
                         onClick={() => handleSort('amount')}
-                        className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                        className="px-4 py-3 text-right text-xs font-medium text-black uppercase cursor-pointer hover:bg-[#F9F8F6] transition-colors select-none"
                       >
                         <div className="flex items-center justify-end gap-1">
                           Amount
@@ -299,12 +299,12 @@ export default function ExpenseTracker() {
                           )}
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-black uppercase">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-[#C9B59C]">
                     {sortedExpenses.length === 0 ? (
                       <tr>
                         <td colSpan="5" className="px-4 py-12 text-center text-gray-500">
@@ -324,7 +324,7 @@ export default function ExpenseTracker() {
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.date}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.description}</td>
                           <td className="px-4 py-3 text-sm">
-                            <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                            <span className="inline-flex px-2 py-1 text-xs font-medium bg-[#D9CFC7] text-[#ae987e] rounded-full">
                               {expense.category}
                             </span>
                           </td>
@@ -335,14 +335,14 @@ export default function ExpenseTracker() {
                             <div className="flex items-center justify-center gap-2">
                               <button 
                                 onClick={() => handleEdit(expense)}
-                                className="text-blue-600 hover:text-blue-800"
+                                className="text-[#ae987e] hover:text-[#c9b59c]"
                                 aria-label="Edit expense"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDelete(expense.id)}
-                                className="text-red-600 hover:text-red-800"
+                                className="text-[#ae987e] hover:text-[#c9b59c]"
                                 aria-label="Delete expense"
                               >
                                 <Trash2 size={16} />
@@ -353,7 +353,7 @@ export default function ExpenseTracker() {
                       ))
                     )}
                   </tbody>
-                  <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                  <tfoot className="bg-[#C9B59C] border-t-2 border-[#C9B59C]">
                     <tr>
                       <td colSpan="3" className="px-4 py-3 text-sm font-bold text-gray-900">Total</td>
                       <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
@@ -370,21 +370,21 @@ export default function ExpenseTracker() {
           // REPORTS VIEW
           <div className="space-y-6">
             {/* Yearly Total */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-[#C9B59C] rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
                 Yearly Total ({new Date().getFullYear()})
               </h2>
-              <p className="text-3xl font-bold text-blue-600">
+              <p className="text-3xl font-bold text-white">
                 {formatCurrency(reportData.yearlyTotal)}
               </p>
             </div>
 
             {/* Quarterly Report */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-[#C9B59C] rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Quarterly Report</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map(q => (
-                  <div key={q} className="bg-gray-50 rounded-lg p-4">
+                  <div key={q} className="bg-[#EFE9E3] rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">Q{q}</div>
                     <div className="text-xl font-bold text-gray-900">
                       {formatCurrency(reportData.quarterlyData[q] || 0)}
@@ -395,11 +395,11 @@ export default function ExpenseTracker() {
             </div>
 
             {/* Monthly Report */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-[#C9B59C] rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Report</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
-                  <div key={month} className="bg-gray-50 rounded-lg p-3">
+                  <div key={month} className="bg-[#EFE9E3] rounded-lg p-3">
                     <div className="text-xs text-gray-600 mb-1">{month}</div>
                     <div className="text-sm font-bold text-gray-900">
                       {formatCurrency(reportData.monthlyData[idx + 1] || 0)}
@@ -409,60 +409,18 @@ export default function ExpenseTracker() {
               </div>
             </div>
 
-            {/* Weekly Report Chart */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Chart)</h2>
-              {Object.keys(reportData.weeklyData).length === 0 ? (
-                <div className="px-4 py-12 text-center text-gray-500">
-                  <p>No expense data for {new Date().getFullYear()} yet</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {Object.entries(reportData.weeklyData)
-                    .sort(([a], [b]) => Number(a) - Number(b))
-                    .map(([week, amount]) => {
-                      const maxAmount = Math.max(...Object.values(reportData.weeklyData), 1);
-                      const percentage = (amount / maxAmount) * 100;
-                      
-                      return (
-                        <div key={week} className="flex items-center gap-3">
-                          <div className="text-sm font-medium text-gray-600 w-16">Week {week}</div>
-                          <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden">
-                            <div
-                              className="bg-blue-600 h-full flex items-center justify-end pr-2 transition-all"
-                              style={{ width: `${percentage}%` }}
-                            >
-                              {percentage > 20 && (
-                                <span className="text-xs font-medium text-white">
-                                  {formatCurrency(amount)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {percentage <= 20 && (
-                            <div className="text-xs font-medium text-gray-600 w-24 text-right">
-                              {formatCurrency(amount)}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-
             {/* Weekly Report Table */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-[#C9B59C] rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Report (Table)</h2>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-xl">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-[#dacbba] border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Week</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-[#C9B59C] bg-[#EFE9E3]">
                     {Object.keys(reportData.weeklyData).length === 0 ? (
                       <tr>
                         <td colSpan="2" className="px-4 py-8 text-center text-gray-500">
@@ -493,7 +451,7 @@ export default function ExpenseTracker() {
       {!showReports && (
         <button
           onClick={() => setShowModal(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110 flex items-center justify-center z-40"
+          className="fixed bottom-6 right-6 w-14 h-14 bg-[#ae987e] text-white rounded-full shadow-lg hover:bg-[#907a62] transition-all hover:scale-110 flex items-center justify-center z-40"
           aria-label="Add expense"
         >
           <Plus size={24} />
@@ -503,15 +461,15 @@ export default function ExpenseTracker() {
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-[#D9CFC7] rounded-3xl shadow-xl w-full max-w-md">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+            <div className="flex items-center justify-between p-4 border-b bg-[#ae987e] rounded-t-3xl border-gray-200">
+              <h2 className="text-lg font-semibold text-white">
                 {editingId ? 'Edit Expense' : 'Add New Expense'}
               </h2>
               <button 
                 onClick={cancelEdit}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-[#907a62] hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -526,7 +484,7 @@ export default function ExpenseTracker() {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-full bg-[#EFE9E3] focus:ring-[#D9CFC7] focus:outline-none focus:ring-2 focus:border-transparent"
                 />
               </div>
 
@@ -536,7 +494,7 @@ export default function ExpenseTracker() {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-full bg-[#EFE9E3] focus:ring-[#D9CFC7] focus:outline-none focus:border-transparent"
                 >
                   {CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -552,7 +510,7 @@ export default function ExpenseTracker() {
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="e.g., Taxi to client meeting"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-full bg-[#EFE9E3] focus:ring-[#D9CFC7] focus:outline-none focus:border-transparent"
                 />
               </div>
 
@@ -566,23 +524,23 @@ export default function ExpenseTracker() {
                   placeholder="0.00"
                   step="0.01"
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-full bg-[#EFE9E3] focus:ring-[#D9CFC7] focus:outline-none focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="flex gap-2 p-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex gap-2 p-4 border-t bg-[#ae987e] rounded-b-3xl border-gray-200">
               <button 
                 onClick={handleSubmit}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#907a62] text-white rounded-full hover:bg-[#79654f] transition-colors"
               >
                 <Plus size={20} />
                 {editingId ? 'Update Expense' : 'Add Expense'}
               </button>
               <button 
                 onClick={cancelEdit}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 bg-[#907a62] text-white rounded-full hover:bg-[#79654f] transition-colors"
               >
                 Cancel
               </button>
